@@ -1,0 +1,11 @@
+.{
+    .name = "Hibiki",
+    .version = "0.0.1",
+    .dependencies = .{
+        .struct_env = .{
+            .url = "https://github.com/Hanaasagi/struct-env/archive/refs/tags/v0.2.1.tar.gz",
+            .hash = "1220b90ac9935ea2a8d79ed917a21648bb2ff74054587f542fead6c30a1de4692d47",
+        },
+    },
+    .paths = .{""},
+}
