@@ -73,7 +73,7 @@ pub fn getEnv() !AppEnv {
     var env_server_max_connections: ?u31 = null;
     if (env.server_max_connections != null) {
         env_server_max_connections = std.fmt.parseInt(u31, env.server_max_connections.?, 10) catch blk: {
-            env_log.err("env HIBIKI_SERVER_MAX_CONNECTIONS must be an unsigned 16-bit integer", .{});
+            env_log.err("env HIBIKI_SERVER_MAX_CONNECTIONS must be an unsigned 31-bit integer", .{});
             invalid_envs = true;
             break :blk null;
         };
