@@ -3,8 +3,8 @@
     .version = "0.0.1",
     .dependencies = .{
         .struct_env = .{
-            .url = "https://github.com/Hanaasagi/struct-env/archive/refs/tags/v0.2.1.tar.gz",
-            .hash = "1220b90ac9935ea2a8d79ed917a21648bb2ff74054587f542fead6c30a1de4692d47",
+            .url = "https://github.com/Hanaasagi/struct-env/archive/b2848f6190297e14bd418c4a522a009f19120a71.tar.gz",
+            .hash = "122039e087dba0e7c5a3c9e12dc74e1fbab03a1ca75e5a7ed2579d405bdf5909b794",
         },
     },
     .paths = .{""},

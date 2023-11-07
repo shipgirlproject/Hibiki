@@ -6,7 +6,7 @@ const Ed25519 = std.crypto.sign.Ed25519;
 const log = std.log.scoped(.server);
 const string = @import("./util.zig").string;
 
-pub fn runServer(server: *http.Server, allocator: mem.Allocator, app_public_key: string) !void {
+pub fn runServer(server: *http.Server, allocator: mem.Allocator, app_public_key: [32]u8) !void {
     outer: while (true) {
         // accept connection
         var response = try server.accept(.{ .allocator = allocator });
@@ -32,7 +32,7 @@ pub fn runServer(server: *http.Server, allocator: mem.Allocator, app_public_key:
     }
 }
 
-fn handleRequest(response: *http.Server.Response, allocator: mem.Allocator, app_public_key: string) !void {
+fn handleRequest(response: *http.Server.Response, allocator: mem.Allocator, app_public_key: [32]u8) !void {
     const request = response.request;
 
     // log request info
@@ -66,19 +66,27 @@ fn handleRequest(response: *http.Server.Response, allocator: mem.Allocator, app_
             return response.send();
         }
 
+        // ensure valid length signature
+        if (signature_header.?.len != 64) {
+            // assume it is an invalid signature
+            response.status = .unauthorized;
+            return response.send();
+        }
+
         // reject content-types other than application/json
         if (!mem.eql(u8, content_type.?, "application/json")) {
             response.status = .unsupported_media_type;
             return response.send();
         }
 
-        // verify signature
-        // TODO: find out why the fuck signature_header.?[0..64].* makes the compiler freak out
-        // in the meantime, compile on zig v0.11.0 and replace all `respond.send()` calls with
-        // `respond.do()` calls.
-        const signature = Ed25519.Signature.fromBytes(signature_header.?[0..64].*);
-        const message = try mem.concat(allocator, u8, .{ timestamp_header.?, body });
+        // coerce string
+        const sig: [64]u8 = signature_header.?[0..64].*;
+
+        const signature = Ed25519.Signature.fromBytes(sig);
+        const message = try mem.concat(allocator, u8, &.{ timestamp_header.?, body });
         const public_key = try Ed25519.PublicKey.fromBytes(app_public_key);
+
+        // verify signature
         if (signature.verify(message, public_key)) {
             // only parse interaction type
             const InteractionType = struct {
