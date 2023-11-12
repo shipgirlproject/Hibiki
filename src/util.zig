@@ -11,17 +11,23 @@ const StructEnv = struct {
     port: ?string,
     server_max_connections: ?string,
     public_key: ?string,
+    type: ?string,
     app_host: ?string,
     app_port: ?string,
+    mq_uri: ?string,
 };
+
+pub const AppMode = enum { HTTP, MQ };
 
 pub const AppEnv = struct {
     host: ?string,
     port: ?u16,
     server_max_connections: ?u31,
     public_key: string,
-    app_host: string,
-    app_port: u16,
+    mode: AppMode,
+    app_host: ?string,
+    app_port: ?u16,
+    mq_uri: ?string,
 };
 
 pub fn getEnv() !AppEnv {
@@ -37,20 +43,45 @@ pub fn getEnv() !AppEnv {
     // find all unset envs before exit
     var unset_envs: bool = false;
 
+    // get type and ensure set
+    var env_type: AppMode = null;
+
+    if (env.type == null) {
+        env_log.err("required env HIBIKI_TYPE not set", {});
+        std.os.exit(1);
+    }
+
+    if (std.mem.eql(u8, env.type, "HTTP")) {
+        env_type = .HTTP;
+    } else if (std.mem.eql(u8, env.type, "MQ")) {
+        env_type = .MQ;
+    } else {
+        env_log.err("env HIBIKI_TYPE must be \"HTTP\" or \"MQ\"", .{});
+    }
+
     // ensure non-optional env vars set
     if (env.public_key == null) {
         env_log.err("required env HIBIKI_PUBLIC_KEY not set", .{});
         unset_envs = true;
     }
 
-    if (env.app_host == null) {
-        env_log.err("required env HIBIKI_APP_HOST not set", .{});
-        unset_envs = true;
+    if (env_type == .HTTP) {
+        if (env.app_host == null) {
+            env_log.err("required env HIBIKI_APP_HOST not set", .{});
+            unset_envs = true;
+        }
+
+        if (env.app_port == null) {
+            env_log.err("required env HIBIKI_APP_PORT not set", .{});
+            unset_envs = true;
+        }
     }
 
-    if (env.app_port == null) {
-        env_log.err("required env HIBIKI_APP_PORT not set", .{});
-        unset_envs = true;
+    if (env.type == .MQ) {
+        if (env.mq_uri == null) {
+            env_log.err("required env HIBIKI_MQ_URI not set", .{});
+            unset_envs = true;
+        }
     }
 
     // exit after detecting all unset mandatory env
@@ -100,9 +131,10 @@ pub fn getEnv() !AppEnv {
         .host = env.host,
         .port = env_port,
         .server_max_connections = env_server_max_connections,
-        .public_key = env.public_key.?,
-        .app_host = env.app_host.?,
-        .app_port = env_app_port.?,
+        .public_key = env.public_key,
+        .app_host = env.app_host,
+        .app_port = env_app_port,
+        .mq_uri = env.mq_uri,
     };
 }
 
